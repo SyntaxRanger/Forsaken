@@ -1,0 +1,101 @@
+local GeneratorParentDirectory = workspace.Map.Ingame.Map
+
+local HighlightVisualSettings = {
+    FillTransparency = 0.8,
+    OutlineColor = Color3.fromRGB(255, 255, 255),
+    OutlineTransparency = 0.6,
+    DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
+    Enabled = true
+}
+
+local function ApplyOrUpdateNameTag(ModelToAffect, BillboardGuiIdentifier, TextColor, NormalizedProgress)
+    local AnchorPart = ModelToAffect.PrimaryPart or ModelToAffect:FindFirstChild("HumanoidRootPart") or ModelToAffect:FindFirstChildWhichIsA("BasePart")
+    if not AnchorPart then return end
+
+    local InfoBillboardGui = ModelToAffect:FindFirstChild(BillboardGuiIdentifier)
+    local InfoTextLabel
+
+    if InfoBillboardGui and InfoBillboardGui:IsA("BillboardGui") then
+        InfoTextLabel = InfoBillboardGui:FindFirstChild("ProgressDisplayLabel")
+        if not (InfoTextLabel and InfoTextLabel:IsA("TextLabel")) then
+            InfoBillboardGui:Destroy()
+            InfoBillboardGui = nil
+            InfoTextLabel = nil
+        end
+    elseif InfoBillboardGui then
+        InfoBillboardGui:Destroy()
+        InfoBillboardGui = nil
+    end
+
+    if not InfoBillboardGui then
+        InfoBillboardGui = Instance.new("BillboardGui")
+        InfoBillboardGui.Name = BillboardGuiIdentifier
+        InfoBillboardGui.Adornee = AnchorPart
+        InfoBillboardGui.Size = UDim2.new(0, 200, 0, 50)
+        InfoBillboardGui.StudsOffset = Vector3.new(0, 5, 0)
+        InfoBillboardGui.AlwaysOnTop = true
+        InfoBillboardGui.Parent = ModelToAffect
+
+        InfoTextLabel = Instance.new("TextLabel")
+        InfoTextLabel.Name = "ProgressDisplayLabel"
+        InfoTextLabel.Size = UDim2.new(1, 0, 1, 0)
+        InfoTextLabel.BackgroundTransparency = 1
+        InfoTextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+        InfoTextLabel.TextStrokeTransparency = 0
+        InfoTextLabel.TextScaled = false
+        InfoTextLabel.TextSize = 11
+        InfoTextLabel.Font = Enum.Font.Montserrat
+        InfoTextLabel.Parent = InfoBillboardGui
+    end
+
+    if InfoTextLabel then
+        InfoTextLabel.Text = ("Progress: %.0f%%"):format(NormalizedProgress) -- Changed %.1f to %.0f
+        InfoTextLabel.TextColor3 = TextColor
+    end
+end
+
+local function ApplyHighlightEffect(ModelToAffect, SurfaceFillColor, HighlightInstanceName)
+    local CurrentHighlightEffect = ModelToAffect:FindFirstChild(HighlightInstanceName)
+    if not CurrentHighlightEffect then
+        local CreatedHighlightEffect = Instance.new("Highlight")
+        CreatedHighlightEffect.Name = HighlightInstanceName
+        CreatedHighlightEffect.Adornee = ModelToAffect
+        CreatedHighlightEffect.FillColor = SurfaceFillColor
+        CreatedHighlightEffect.FillTransparency = HighlightVisualSettings.FillTransparency
+        CreatedHighlightEffect.OutlineColor = HighlightVisualSettings.OutlineColor
+        CreatedHighlightEffect.OutlineTransparency = HighlightVisualSettings.OutlineTransparency
+        CreatedHighlightEffect.DepthMode = HighlightVisualSettings.DepthMode
+        CreatedHighlightEffect.Enabled = HighlightVisualSettings.Enabled
+        CreatedHighlightEffect.Parent = ModelToAffect
+    end
+end
+
+local function RefreshGeneratorVisuals()
+    for _, MainGeneratorGroup in ipairs(GeneratorParentDirectory:GetChildren()) do
+        if MainGeneratorGroup:IsA("Model") then
+            local ContainedElementsFolder = MainGeneratorGroup:FindFirstChild("Instances")
+            local ProgressValueObject = MainGeneratorGroup:FindFirstChild("Progress") 
+            
+            if ContainedElementsFolder and ProgressValueObject then
+                local GeneratorProgress = ProgressValueObject.Value or 0
+
+                for _, SpecificGeneratorInstance in ipairs(ContainedElementsFolder:GetChildren()) do
+                    if SpecificGeneratorInstance:IsA("Model") and SpecificGeneratorInstance.Name == "Generator" then
+                        local highlightEffectColor = Color3.fromRGB(0, 255, 0)
+                        local nameTagTextColor = Color3.fromRGB(0, 255, 0)
+
+                        ApplyHighlightEffect(SpecificGeneratorInstance, highlightEffectColor, "GeneratorHighlight")
+                        ApplyOrUpdateNameTag(SpecificGeneratorInstance, "GeneratorNameTag", nameTagTextColor, GeneratorProgress)
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        RefreshGeneratorVisuals()
+        task.wait(1)
+    end
+end)
