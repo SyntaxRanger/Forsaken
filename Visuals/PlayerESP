@@ -2,9 +2,9 @@ local SurvivorsFolder = workspace.Players.Survivors
 local KillersFolder = workspace.Players.Killers
 
 local HighlightSettings = {
-    FillTransparency = 0.9,
+    FillTransparency = 0.8,
     OutlineColor = Color3.fromRGB(255, 255, 255),
-    OutlineTransparency = 0.7,
+    OutlineTransparency = 0.6,
     DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
     Enabled = true
 }
